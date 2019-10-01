@@ -1,0 +1,44 @@
+key "{{ dns_key_name }}" {
+	algorithm "{{ dns_key_algorithm }}";
+	secret "{{ dns_key_secret }}";
+};
+
+acl askers {
+	any;
+};
+
+acl updaters {
+	any;
+};
+
+options
+{
+	directory 		"/var/named";
+	listen-on port 53	{ any; };
+	forwarders {
+{% for server in public_dns_servers.split(',') %}
+		{{ server }};
+{% endfor %}
+	};
+	recursion yes;
+	allow-query		{ askers; };
+	pid-file "/run/named/named.pid";
+	session-keyfile "/run/named/session.key";
+	managed-keys-directory "/var/named/dynamic";
+};
+
+zone {{ forward_zone }} {
+	type master;
+	file "/var/named/db.{{ forward_zone }}" ;
+	allow-update { key {{ dns_key_name }}; };
+	notify yes;
+	forwarders {};
+};
+
+zone {{ reverse_zone }} {
+	type master;
+	file "/var/named/db.{{ reverse_zone }}";
+	allow-update { key {{ dns_key_name }}; };
+	notify yes;
+	forwarders {};
+};

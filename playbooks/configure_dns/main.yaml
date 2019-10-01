@@ -1,0 +1,8 @@
+- hosts: all
+  tasks:
+  - name: install bind9 on dns server
+    include: tasks/install_rpms.yaml
+  - name: create bind config files
+    include: tasks/create_named_configs.yaml
+  - name: nsupdate records
+    include: tasks/nsupdate.yaml

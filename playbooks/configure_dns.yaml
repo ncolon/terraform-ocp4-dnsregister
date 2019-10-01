@@ -1,0 +1,2 @@
+---
+- import_playbook: configure_dns/main.yaml

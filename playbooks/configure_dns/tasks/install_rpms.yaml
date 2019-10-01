@@ -1,0 +1,17 @@
+- name: install rpms
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+   - "bind"
+   - "bind-utils"
+   - "python-dns"
+
+- name: open firewall
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+  with_items:
+    - "53/tcp"
+    - "53/udp"

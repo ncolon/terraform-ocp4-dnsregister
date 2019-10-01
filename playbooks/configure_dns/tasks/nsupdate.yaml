@@ -1,0 +1,10 @@
+- name: add dns records
+  nsupdate:
+    key_name: "{{ dns_key_name }}"
+    key_secret: "{{ dns_key_secret }}"
+    server: "{{ dns_private_ip }}"
+    zone: "{{ item.zone }}"
+    record: "{{ item.name }}"
+    value: "{{ item.value }}"
+    type: "{{ item.type }}"
+  with_items: "{{ records | b64decode }}"
