@@ -1,17 +1,21 @@
 - name: install rpms
   yum:
-    name: "{{ item }}"
+    name: "{{ packages }}"
     state: latest
-  with_items:
-   - "bind"
-   - "bind-utils"
-   - "python-dns"
 
-- name: open firewall
+- name: Gather service facts
+  service_facts:
+  register: services_state
+
+- name: open ports on firewall
   firewalld:
-    port: "{{ item }}"
-    permanent: yes
+    port: "{{ item[1] }}"
     state: enabled
-  with_items:
-    - "53/tcp"
-    - "53/udp"
+    immediate: yes
+    permanent: yes
+    zone: "{{ item[0] }}"
+  with_nested:
+    - "{{ zones }}"
+    - "{{ ports }}"
+  when: ansible_facts.services['firewalld.service'] is defined and
+        ansible_facts.services['firewalld.service'].state == 'running'

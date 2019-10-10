@@ -1,0 +1,25 @@
+- name: add private dns to all interfaces
+  nmcli:
+    type: ethernet
+    conn_name: "{{ item }}"
+    dns4:
+      - "{{ dns_private_ip }}"
+    state: present
+  with_items: "{{ ansible_interfaces }}"
+  when: item != "lo"
+  
+- name: restart networking
+  service:
+    name: network
+    state: restarted
+  async: 120
+  poll: 0
+  register: net_restarting
+
+- name: check restart networkl status
+  async_status:
+    jid: "{{ net_restarting.ansible_job_id }}"
+  register: async_poll_results
+  until: async_poll_results.finished
+  retries: 30
+  listen: restart systemd-networkd

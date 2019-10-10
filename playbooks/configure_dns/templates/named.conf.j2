@@ -1,15 +1,18 @@
-key "{{ dns_key_name }}" {
+key "{{ dns_key_name_internal }}" {
 	algorithm "{{ dns_key_algorithm }}";
-	secret "{{ dns_key_secret }}";
+	secret "{{ dns_key_secret_internal }}";
 };
 
-acl askers {
-	any;
+key "{{ dns_key_name_external }}" {
+	algorithm "{{ dns_key_algorithm }}";
+	secret "{{ dns_key_secret_external }}";
 };
 
-acl updaters {
-	any;
-};
+
+acl askers   { any; };
+acl updaters { any; };
+acl trusted  { !key {{ dns_key_name_external }}; key {{ dns_key_name_internal }}; 192.168.100.0/24; localhost; };
+acl guests   { !key {{ dns_key_name_internal }}; key {{ dns_key_name_external }}; 9.0.0.0/8; };
 
 options
 {
@@ -27,18 +30,40 @@ options
 	managed-keys-directory "/var/named/dynamic";
 };
 
-zone {{ forward_zone }} {
-	type master;
-	file "/var/named/db.{{ forward_zone }}" ;
-	allow-update { key {{ dns_key_name }}; };
-	notify yes;
-	forwarders {};
+
+view "trusted" {
+	match-clients { trusted; };
+	zone {{ forward_zone }} {
+		type master;
+		file "/var/named/db.{{ forward_zone }}" ;
+		allow-update { key {{ dns_key_name_internal }}; };
+		notify yes;
+		forwarders {};
+	};
+
+	zone {{ reverse_zone }} {
+		type master;
+		file "/var/named/db.{{ reverse_zone }}";
+		allow-update { key {{ dns_key_name_internal }}; };
+		notify yes;
+		forwarders {};
+	};
 };
 
-zone {{ reverse_zone }} {
-	type master;
-	file "/var/named/db.{{ reverse_zone }}";
-	allow-update { key {{ dns_key_name }}; };
-	notify yes;
-	forwarders {};
+view "guests" {
+	match-clients { guests; };
+	zone {{ forward_zone }} {
+		type master;
+		file "/var/named/db.external.{{ forward_zone }}" ;
+		allow-update { key {{ dns_key_name_external }}; };
+		notify yes;
+		forwarders {};
+	};
+	zone {{ reverse_zone }} {
+		type master;
+		file "/var/named/db.external.{{ reverse_zone }}";
+		allow-update { key {{ dns_key_name_external }}; };
+		notify yes;
+		forwarders {};
+	};
 };

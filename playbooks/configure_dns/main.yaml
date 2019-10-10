@@ -2,7 +2,23 @@
   tasks:
   - name: install bind9 on dns server
     include: tasks/install_rpms.yaml
+    vars:
+      - ports:
+        - 53/tcp
+        - 53/udp
+      - zones:
+        - public
+        - internal
+      - packages: 
+        - bind
+        - bind-utils
+        - python-dns
+        - python-gobject
+        - NetworkManager-glib
+
   - name: create bind config files
     include: tasks/create_named_configs.yaml
   - name: nsupdate records
     include: tasks/nsupdate.yaml
+  - name: switch to local dns server
+    include: tasks/switch_dns.yaml
